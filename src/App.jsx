@@ -5,40 +5,59 @@ import Movies from "./Components/Movies";
 import Watchlist from "./Components/Watchlist";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Banner from "./Components/Banner";
-import Paging from "./Components/Paging";
-import Child from "./prop_drilling/Child";
-import Family from "./prop_drilling/Family";
 
 function App() {
   const [watchList, setWatchList] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  // Add to watchlist with duplicate check
   const handleWatchList = (movieObj) => {
-    let newWatchList = [...watchList, movieObj];
-    localStorage.setItem("movieApp", JSON.stringify(newWatchList));
+    // Check if movie already exists
+    if (watchList.some(movie => movie.id === movieObj.id)) {
+      alert("Movie already in watchlist!");
+      return;
+    }
+    
+    const newWatchList = [...watchList, movieObj];
+    localStorage.setItem("filmvault_watchlist", JSON.stringify(newWatchList));
     setWatchList(newWatchList);
-    console.log(newWatchList);
   };
 
+  // Remove from watchlist
   const handleRemoveWatchList = (movieObj) => {
-    let filterWatchList = watchList.filter((movie) => {
-      return movie.id != movieObj.id;
-    });
-    localStorage.setItem("movieApp", JSON.stringify(filterWatchList));
+    const filterWatchList = watchList.filter((movie) => movie.id !== movieObj.id);
+    localStorage.setItem("filmvault_watchlist", JSON.stringify(filterWatchList));
     setWatchList(filterWatchList);
   };
 
+  // Load watchlist from localStorage on mount
   useEffect(() => {
-    let movieFromLocol = localStorage.getItem("movieApp");
-    if (!movieFromLocol) {
-      return;
+    try {
+      const movieFromLocal = localStorage.getItem("filmvault_watchlist");
+      if (movieFromLocal) {
+        setWatchList(JSON.parse(movieFromLocal));
+      }
+    } catch (error) {
+      console.error("Error loading watchlist:", error);
+    } finally {
+      setLoading(false);
     }
-    setWatchList(JSON.parse(movieFromLocol));
   }, []);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+        <div className="animate-spin">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-purple-500 rounded-full"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className="bg-gradient-to-b from-gray-900 via-gray-800 to-black min-h-screen">
       <BrowserRouter>
-        <Navbar />
+        <Navbar watchListCount={watchList.length} />
         <Routes>
           <Route
             path="/"
@@ -54,7 +73,7 @@ function App() {
             }
           />
           <Route
-            path="/WatchList"
+            path="/watchlist"
             element={
               <Watchlist
                 watchList={watchList}
@@ -65,7 +84,7 @@ function App() {
           />
         </Routes>
       </BrowserRouter>
-    </>
+    </div>
   );
 }
 
